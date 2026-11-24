@@ -17,6 +17,16 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Extract project zip if app folder is missing
+        run: |
+          if [ ! -d app ]; then
+            ZIP=$(ls DynamicPill*.zip | head -n 1)
+            echo "app/ not found, extracting $ZIP"
+            unzip -o "$ZIP"
+          fi
+          test -f app/build.gradle
+          ls -R app | head -50
+
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
@@ -27,12 +37,6 @@ jobs:
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: '8.9'
-
-      - name: Check Xposed API repo is reachable
-        run: |
-          curl -sSfI --retry 5 --retry-delay 5 \
-            https://api.xposed.info/de/robv/android/xposed/api/82/api-82.pom \
-            || echo "Warning: api.xposed.info not reachable right now"
 
       - name: Build debug and release APK
         run: gradle assembleDebug assembleRelease --no-daemon --stacktrace
